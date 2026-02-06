@@ -1,0 +1,76 @@
+{
+    "name": "DB + Email Report (Webhook)",
+    "nodes": [
+      {
+        "parameters": {
+          "path": "db-email-report",
+          "httpMethod": "POST",
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [300, 300]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO reports (report_name, payload) VALUES ({{$json[\"report_name\"]}}, {{$json[\"payload\"]}}::jsonb) RETURNING id;"
+        },
+        "name": "Insert Report",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2,
+        "position": [540, 300],
+        "credentials": {
+          "postgres": {
+            "id": "POSTGRES_CRED_ID",
+            "name": "Local Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "fromEmail": "reports@local.demo",
+          "toEmail": "={{$json[\"email_to\"]}}",
+          "subject": "={{\"Report: \" + $json[\"report_name\"]}}",
+          "text": "={{\"Report created. Payload:\\n\" + JSON.stringify($json[\"payload\"], null, 2)}}",
+          "options": {}
+        },
+        "name": "Send Email",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2,
+        "position": [780, 300],
+        "credentials": {
+          "smtp": {
+            "id": "SMTP_CRED_ID",
+            "name": "MailHog SMTP"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "responseBody": "={{ { ok: true, insertedId: $node[\"Insert Report\"].json[\"id\"], mail: \"sent\" } }}",
+          "options": {}
+        },
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [1000, 300]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [[{ "node": "Insert Report", "type": "main", "index": 0 }]]
+      },
+      "Insert Report": {
+        "main": [[{ "node": "Send Email", "type": "main", "index": 0 }]]
+      },
+      "Send Email": {
+        "main": [[{ "node": "Respond", "type": "main", "index": 0 }]]
+      }
+    },
+    "active": false,
+    "settings": {}
+  }
+  

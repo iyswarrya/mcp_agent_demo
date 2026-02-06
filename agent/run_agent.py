@@ -25,7 +25,7 @@ async def main() -> None:
         cache_tools_list=True,
         max_retry_attempts=3,
     ) as mcp_server:
-
+        """
         agent = Agent(
             name="MathAgent",
             instructions=(
@@ -39,6 +39,20 @@ async def main() -> None:
 
         # Ask it something that should trigger tool use
         result = await Runner.run(agent, "Compute 91 + 37 using your tools.")
+        """
+
+        agent = Agent(
+            name="dbEmailAgent",
+            instructions=(
+                "When asked to create a report and email it, call the MCP tool "
+                "`trigger_db_email_workflow(report_name, payload, email_to)`."
+            ),
+            mcp_servers=[mcp_server],
+            # optional but useful: nudges tool usage
+            model_settings=ModelSettings(tool_choice="required"),
+        )
+
+
         print("\n=== FINAL OUTPUT ===")
         print(result.final_output)
 

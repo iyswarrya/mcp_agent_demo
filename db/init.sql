@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS reports (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  report_name TEXT NOT NULL,
+  payload JSONB NOT NULL
+);
